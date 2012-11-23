@@ -11,10 +11,11 @@ module.exports = function(grunt) {
 
   var detective = require('detective');
   var path = require('path');
-  var fs = require('fs');
 
-  // Grunt v0.3 compat
-  grunt.file.exists = grunt.file.exists || fs.existsSync || path.existsSync;
+  // grunt v0.4+
+  if (grunt.utils) {
+    grunt.fatal('grunt-required is only compatible with v0.4.0+');
+  }
 
   // use npm to install given modules
   function npmInstall(requires, done) {
@@ -38,9 +39,9 @@ module.exports = function(grunt) {
     }, done);
   }
 
+  // main task
   grunt.registerMultiTask('required', 'A Grunt task for detecting required modules and option to automatically install with npm.', function() {
-    var helpers = require('grunt-lib-contrib').init(grunt);
-    var options = grunt.util._.defaults(helpers.options(this), {
+    var options = this.options({
       // set true to try to install found libs automatically
       install: false,
       // array of modules to ignore - default built in libs
@@ -51,39 +52,32 @@ module.exports = function(grunt) {
     });
     var done = this.async();
 
-    // TODO: ditch this when grunt v0.4 is released
-    this.files = this.files || helpers.normalizeMultiTaskFiles(this.data, this.target);
+    this.file.src.forEach(function(filepath) {
+      var requires = detective(grunt.file.read(filepath));
 
-    this.files.forEach(function(fileObj) {
-      var files = grunt.file.expand({nonull: true}, fileObj.src);
-      var src = files.map(function(filepath) {
-        // find required libs
-        var requires = detective(grunt.file.read(filepath));
+      // filter out ignored libs
+      requires = grunt.util._.chain(requires)
+        .filter(function(module) {
+          // filter local libs
+          if (module.slice(0, 2) === './') { return false; }
+          // filter ignored libs
+          return grunt.util._.indexOf(options.ignore, module) === -1;
+        }).map(function(module) {
+          // get actual module name
+          if (module.indexOf('/') !== -1) {
+            module = module.slice(0, module.indexOf('/'));
+          }
+          return module;
+        })
+        .uniq()
+        .value()
+      ;
 
-        // filter out ignored libs
-        requires = grunt.util._.chain(requires)
-          .filter(function(module) {
-            // filter local libs
-            if (module.slice(0, 2) === './') { return false; }
-            // filter ignored libs
-            return grunt.util._.indexOf(options.ignore, module) === -1;
-          }).map(function(module) {
-            // get actual module name
-            if (module.indexOf('/') !== -1) {
-              module = module.slice(0, module.indexOf('/'));
-            }
-            return module;
-          })
-          .uniq()
-          .value()
-        ;
+      grunt.log.ok('"' + requires.join('", "') + '" required in ' + filepath);
 
-        grunt.log.ok('"' + requires.join('", "') + '" required in ' + filepath);
-
-        // if auto install modules
-        if (options.install) { npmInstall(requires, done); }
-        else { done(); }
-      });
+      // if auto install modules
+      if (options.install) { npmInstall(requires, done); }
+      else { done(); }
     });
   });
 
