@@ -2,7 +2,7 @@
  * grunt-required
  * https://github.com/shama/grunt-required
  *
- * Copyright (c) 2012 Kyle Robinson Young
+ * Copyright (c) 2013 Kyle Robinson Young
  * Licensed under the MIT license.
  */
 
@@ -11,11 +11,6 @@ module.exports = function(grunt) {
 
   var detective = require('detective');
   var path = require('path');
-
-  // grunt v0.4+
-  if (grunt.utils) {
-    grunt.fatal('grunt-required is only compatible with v0.4.0+');
-  }
 
   // use npm to install given modules
   function npmInstall(requires, done) {
@@ -52,7 +47,7 @@ module.exports = function(grunt) {
     });
     var done = this.async();
 
-    this.file.src.forEach(function(filepath) {
+    this.filesSrc.forEach(function(filepath) {
       var requires = detective(grunt.file.read(filepath));
 
       // filter out ignored libs

@@ -2,7 +2,7 @@
  * grunt-required
  * https://github.com/shama/grunt-required
  *
- * Copyright (c) 2012 Kyle Robinson Young
+ * Copyright (c) 2013 Kyle Robinson Young
  * Licensed under the MIT license.
  */
 
