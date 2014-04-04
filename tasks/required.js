@@ -11,12 +11,13 @@ module.exports = function(grunt) {
 
   var detective = require('detective');
   var path = require('path');
+  var async = require('async');
 
   // use npm to install given modules
   function npmInstall(requires, done) {
     var npmBin = path.join(path.dirname(process.argv[0]), 'npm');
     if (process.platform === 'win32') { npmBin += '.cmd'; }
-    grunt.util.async.forEachSeries(requires, function(module, next) {
+    async.forEachSeries(requires, function(module, next) {
       // skip existing modules
       if (grunt.file.exists(path.join('./node_modules/' + module))) {
         grunt.log.writeln(String('Module "' + module + '" already installed, skipping.').cyan);
@@ -47,7 +48,7 @@ module.exports = function(grunt) {
     });
     var done = this.async();
 
-    this.filesSrc.forEach(function(filepath) {
+    async.forEachSeries(this.filesSrc, function(filepath, next) {
       var requires = detective(grunt.file.read(filepath));
 
       // filter out ignored libs
@@ -71,9 +72,9 @@ module.exports = function(grunt) {
       grunt.log.ok('"' + requires.join('", "') + '" required in ' + filepath);
 
       // if auto install modules
-      if (options.install) { npmInstall(requires, done); }
-      else { done(); }
-    });
+      if (options.install) { npmInstall(requires, next); }
+      else { next(); }
+    }, done);
   });
 
 };

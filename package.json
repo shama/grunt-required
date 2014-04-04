@@ -28,7 +28,8 @@
     "test": "grunt"
   },
   "dependencies": {
-    "detective": "~0.2.1"
+    "detective": "~0.2.1",
+    "async": "^0.6.2"
   },
   "devDependencies": {
     "grunt-contrib-jshint": "~0.6.2",
